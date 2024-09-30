@@ -1,0 +1,41 @@
+name: CMake 
+
+on:
+  push:
+    branches: [ main ]  # Действие срабатывает при пушах в ветку main
+  pull_request:
+    branches: [ main ]  # Действие срабатывает при запросах на слияние в ветку main
+
+env:
+  BUILD_TYPE: Release  # Установка переменной окружения для типа сборки
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Указание окружения для выполнения задач
+
+    steps:
+    - uses: actions/checkout@v2  # Шаг для проверки кода из репозитория
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{ runner.workspace }}/build  # Создание каталога для сборки
+
+    - name: Configure CMake
+      shell: bash  # Используем оболочку bash
+      working-directory: ${{ runner.workspace }}/build  # Указываем рабочую директорию
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE  # Настройка CMake
+
+    - name: Build 
+      working-directory: ${{ runner.workspace }}/build  # Указываем рабочую директорию
+      shell: bash  # Используем оболочку bash
+      run: cmake --build . --config $BUILD_TYPE  # Сборка проекта
+
+    - name: Test
+      working-directory: ${{ runner.workspace }}/build  # Указываем рабочую директорию
+      shell: bash  # Используем оболочку bash
+      run: ctest -C $BUILD_TYPE  # Запуск тестов
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3  # Шаг для загрузки артефактов сборки
+      with:
+        name: build-artifacts  # Название загружаемых артефактов
+        path: ${{ runner.workspace }}/build  # Путь к артефактам
